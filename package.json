@@ -1,0 +1,27 @@
+{
+  "name": "electron-audio-player",
+  "version": "1.0.0",
+  "description": "A simple audio player for Mac built with Electron",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "music-metadata": "^7.14.0"
+  },
+  "build": {
+    "appId": "com.pompodar.audioplayer",
+    "productName": "Audio Player",
+    "mac": {
+      "category": "public.app-category.music"
+    }
+  }
+}

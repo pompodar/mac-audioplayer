@@ -1,14 +1,17 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
-    // Expose a function to invoke the metadata handler in main.js
-    getMetadata: (filePath) => ipcRenderer.invoke("get-metadata", filePath),
-
-    // Expose a function to receive selected files from the main process
+    // Main -> Renderer
     onFilesSelected: (callback) =>
         ipcRenderer.on("files-selected", (_event, filePaths) => {
             callback(filePaths);
         }),
-    
+
+    // Renderer -> Main (and back)
+    getMetadata: (filePath) => ipcRenderer.invoke("get-metadata", filePath),
     openFileDialog: () => ipcRenderer.invoke("open-file-dialog"),
+    getInitialState: () => ipcRenderer.invoke("get-initial-state"),
+
+    // Renderer -> Main (one-way)
+    updateState: (state) => ipcRenderer.send("update-state", state),
 });

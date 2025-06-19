@@ -1,43 +1,49 @@
 const { app, BrowserWindow, ipcMain, dialog, Menu } = require("electron");
 const path = require("path");
 const musicMetadata = require("music-metadata");
+const Store = require("electron-store");
 
-// Keep a global reference to the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
+const store = new Store();
 let mainWindow;
 
 function createWindow() {
+    const windowBounds = store.get("windowBounds", { width: 400, height: 650 });
+
     mainWindow = new BrowserWindow({
-        width: 400,
-        height: 600,
+        ...windowBounds,
+        minWidth: 380,
+        minHeight: 500,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
         },
+        titleBarStyle: "hidden",
+        trafficLightPosition: { x: 15, y: 15 },
+    });
+
+    // Save window state on resize and move
+    mainWindow.on("resize", () => {
+        const { width, height } = mainWindow.getBounds();
+        store.set("windowBounds", { width, height });
+    });
+
+    mainWindow.on("move", () => {
+        const { x, y } = mainWindow.getBounds();
+        store.set("windowBounds", { ...store.get("windowBounds"), x, y });
     });
 
     mainWindow.loadFile("index.html");
-
-    // Open the DevTools - useful for debugging
-    // mainWindow.webContents.openDevTools();
 
     mainWindow.on("closed", function () {
         mainWindow = null;
     });
 }
 
-// Function to create the application menu (for Mac)
 const createMenu = () => {
     const template = [
         {
             label: app.getName(),
             submenu: [
                 { role: "about" },
-                { type: "separator" },
-                { role: "services" },
-                { type: "separator" },
-                { role: "hide" },
-                { role: "hideOthers" },
-                { role: "unhide" },
                 { type: "separator" },
                 { role: "quit" },
             ],
@@ -64,7 +70,6 @@ const createMenu = () => {
                                 },
                             ],
                         });
-
                         if (filePaths && filePaths.length > 0) {
                             mainWindow.webContents.send(
                                 "files-selected",
@@ -75,14 +80,7 @@ const createMenu = () => {
                 },
             ],
         },
-        {
-            label: "View",
-            submenu: [
-                { role: "reload" },
-                { role: "forceReload" },
-                { role: "toggleDevTools" },
-            ],
-        },
+        { role: "viewMenu" },
     ];
 
     const menu = Menu.buildFromTemplate(template);
@@ -92,19 +90,19 @@ const createMenu = () => {
 app.whenReady().then(() => {
     createWindow();
     createMenu();
-
-    app.on("activate", function () {
+    app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
 });
 
-app.on("window-all-closed", function () {
+app.on("window-all-closed", () => {
     if (process.platform !== "darwin") {
         app.quit();
     }
 });
 
-// IPC handler to get audio metadata
+// --- IPC HANDLERS ---
+
 ipcMain.handle("get-metadata", async (event, filePath) => {
     try {
         const metadata = await musicMetadata.parseFile(filePath);
@@ -114,7 +112,6 @@ ipcMain.handle("get-metadata", async (event, filePath) => {
             album: metadata.common.album,
         };
     } catch (error) {
-        console.error("Error reading metadata:", error);
         return {};
     }
 });
@@ -127,4 +124,17 @@ ipcMain.handle("open-file-dialog", async () => {
         ],
     });
     return filePaths;
+});
+
+ipcMain.handle("get-initial-state", () => {
+    return store.get("playerState", {
+        playlist: [],
+        currentTrackIndex: -1,
+        volume: 0.5,
+        playbackPosition: 0,
+    });
+});
+
+ipcMain.on("update-state", (event, state) => {
+    store.set("playerState", state);
 });

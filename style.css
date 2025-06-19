@@ -2,7 +2,7 @@
     --primary-bg: #282c34;
     --secondary-bg: #3c4049;
     --text-color: #abb2bf;
-    --accent-color: #dbd715;
+    --accent-color: #d5b712;
     --light-grey: #9ca3af;
 }
 
@@ -12,24 +12,27 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+    height: 60vh;
     box-sizing: border-box;
     user-select: none;
+    -webkit-app-region: drag; /* Makes the whole window draggable */
 }
 
 #player-container {
+    -webkit-app-region: no-drag; /* Exclude the container from being a drag region */
     background-color: var(--secondary-bg);
-    padding: 20px;
+    padding: 25px 20px 20px 20px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    width: 100%;
-    max-width: 360px;
+    width: 90%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.drag-over {
+    border: 2px dashed var(--accent-color) !important;
 }
 
 #track-info {
@@ -60,124 +63,97 @@ body {
 }
 
 input[type="range"] {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 6px;
-    background: var(--primary-bg);
-    border-radius: 5px;
-    outline: none;
-    transition: opacity .2s;
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; background: var(--primary-bg);
+    border-radius: 5px; outline: none; transition: opacity .2s;
 }
-
 input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: var(--accent-color);
-    cursor: pointer;
-    border-radius: 50%;
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; background: var(--accent-color);
+    cursor: pointer; border-radius: 50%;
 }
-
 input[type="range"]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: var(--accent-color);
-    cursor: pointer;
-    border-radius: 50%;
+    width: 16px; height: 16px; background: var(--accent-color);
+    cursor: pointer; border-radius: 50%;
 }
 
 #controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
+    display: flex; justify-content: center; align-items: center; gap: 20px;
 }
 
 #controls button {
-    background: none;
-    border: 2px solid var(--accent-color);
-    color: var(--accent-color);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    font-size: 1.2em;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
+    background: none; border: 2px solid var(--accent-color); color: var(--accent-color);
+    border-radius: 50%; width: 50px; height: 50px; font-size: 1.2em;
+    cursor: pointer; transition: background-color 0.2s, color 0.2s;
 }
 
-#controls button:hover {
-    background-color: var(--accent-color);
-    color: var(--primary-bg);
-}
+#controls button:hover { background-color: var(--accent-color); color: var(--primary-bg); }
 
 #playlist-container {
-    background-color: var(--primary-bg);
-    border-radius: 8px;
-    max-height: 150px;
-    overflow-y: auto;
+    background-color: var(--primary-bg); border-radius: 8px;
+    display: flex; flex-direction: column;
+    overflow-y: scroll;
+    min-height: 100px;
 }
 
 #playlist-header {
-    padding: 8px 12px;
-    font-weight: bold;
-    border-bottom: 1px solid var(--secondary-bg);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; font-weight: bold; border-bottom: 1px solid var(--secondary-bg);
+    flex-shrink: 0;
 }
 
+#add-files-btn {
+    background: none; border: none; color: var(--light-grey);
+    font-size: 1.1em; cursor: pointer; padding: 0 5px; border-radius: 4px;
+}
+
+#add-files-btn:hover { color: var(--accent-color); }
+
 #playlist {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    list-style: none; padding: 0; margin: 0;
+    overflow-y: auto; /* Allows scrolling */
 }
 
 #playlist li {
+    display: flex; /* Use flexbox for layout */
+    justify-content: space-between; /* Pushes children to opposite ends */
+    align-items: center; /* Vertically centers the items */
     padding: 8px 12px;
     cursor: pointer;
     border-bottom: 1px solid var(--secondary-bg);
     font-size: 0.9em;
+    overflow: hidden; /* Keep this to handle long names */
+}
+
+/* ADD a rule for the song name span inside the li */
+#playlist li span {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-grow: 1; /* Allow the name to take up available space */
+    padding-right: 10px; /* Add space between name and button */
 }
 
-#playlist li:last-child {
-    border-bottom: none;
+/* ADD styles for the new delete button */
+.delete-btn {
+    background: none;
+    border: none;
+    color: var(--light-grey);
+    cursor: pointer;
+    font-size: 1em;
+    padding: 0 5px;
+    border-radius: 4px;
+    flex-shrink: 0; /* Prevent the button from shrinking */
 }
 
-#playlist li:hover {
-    background-color: var(--secondary-bg);
+.delete-btn:hover {
+    color: #e06c75; /* A common 'danger' or 'delete' color */
 }
 
+#playlist li:last-child { border-bottom: none; }
+#playlist li:hover { background-color: var(--secondary-bg); }
 #playlist li.active {
     background-color: var(--accent-color);
     color: var(--primary-bg);
     font-weight: bold;
-}
-
-/* in style.css */
-
-/* MODIFY the #playlist-header rule */
-#playlist-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    font-weight: bold;
-    border-bottom: 1px solid var(--secondary-bg);
-}
-
-/* ADD this new rule for the button */
-#add-files-btn {
-    background: none;
-    border: none;
-    color: var(--light-grey);
-    font-size: 1.1em;
-    cursor: pointer;
-    padding: 0 5px;
-    border-radius: 4px;
-}
-
-#add-files-btn:hover {
-    color: var(--accent-color);
 }

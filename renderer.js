@@ -13,10 +13,13 @@ const artistEl = document.getElementById("artist");
 const playlistEl = document.getElementById("playlist");
 const addFilesBtn = document.getElementById("add-files-btn");
 const playerContainer = document.getElementById("player-container");
+const speedBtn = document.getElementById("speed-btn");
 
 // --- State Variables ---
 let playlist = [];
 let currentTrackIndex = -1;
+const playbackSpeeds = [1.0, 1.25, 1.5, 1.75, 2.0, 0.75];
+let currentSpeedIndex = 0;
 
 // --- State Management ---
 function saveCurrentState() {
@@ -30,6 +33,7 @@ function saveCurrentState() {
             audioPlayer.currentTime !== audioPlayer.duration
                 ? audioPlayer.currentTime
                 : 0,
+        playbackRate: audioPlayer.playbackRate,
     };
     window.api.updateState(state);
 }
@@ -43,10 +47,16 @@ async function loadInitialState() {
         audioPlayer.volume = state.volume;
         volumeSlider.value = state.volume;
 
+        const savedSpeed = state.playbackRate || 1.0;
+        audioPlayer.playbackRate = savedSpeed;
+        speedBtn.textContent = `${savedSpeed}`;
+        const speedIndex = playbackSpeeds.indexOf(savedSpeed);
+        currentSpeedIndex = speedIndex > -1 ? speedIndex : 0;
+
         renderPlaylist();
 
         if (currentTrackIndex > -1 && playlist.length > 0) {
-            loadTrack(currentTrackIndex, false); // Load track but don't play
+            loadTrack(currentTrackIndex, false);
             audioPlayer.addEventListener(
                 "loadedmetadata",
                 () => {
@@ -59,8 +69,8 @@ async function loadInitialState() {
     }
 }
 document.addEventListener("DOMContentLoaded", loadInitialState);
-setInterval(saveCurrentState, 5000); // Save state every 5 seconds
-window.addEventListener("beforeunload", saveCurrentState); // Save on close
+setInterval(saveCurrentState, 5000);
+window.addEventListener("beforeunload", saveCurrentState);
 
 // --- Core Functions ---
 function loadTrack(index, autoplay = true) {
@@ -133,18 +143,14 @@ function deleteTrack(indexToDelete) {
     if (indexToDelete < 0 || indexToDelete >= playlist.length) return;
     const wasPlaying = !audioPlayer.paused;
 
-    // Adjust currentTrackIndex before splicing if necessary
     if (indexToDelete < currentTrackIndex) {
         currentTrackIndex--;
     }
 
-    // Remove the track from the playlist
     playlist.splice(indexToDelete, 1);
 
     if (indexToDelete === currentTrackIndex) {
-        // If we deleted the currently active track
         if (playlist.length === 0) {
-            // Reset player if playlist is empty
             audioPlayer.pause();
             audioPlayer.src = "";
             titleEl.textContent = "No track loaded";
@@ -153,9 +159,8 @@ function deleteTrack(indexToDelete) {
             durationEl.textContent = "0:00";
             currentTrackIndex = -1;
         } else {
-            // Ensure the new index is valid, then load the new track
             if (currentTrackIndex >= playlist.length) {
-                currentTrackIndex = 0; // Wrap around to the beginning
+                currentTrackIndex = 0;
             }
             loadTrack(currentTrackIndex, wasPlaying);
         }
@@ -167,7 +172,6 @@ function deleteTrack(indexToDelete) {
 
 // --- Event Listeners ---
 window.api.onFilesSelected(addFilesToPlaylist);
-
 addFilesBtn.addEventListener("click", async () => {
     const filePaths = await window.api.openFileDialog();
     if (filePaths && filePaths.length > 0) addFilesToPlaylist(filePaths);
@@ -213,6 +217,14 @@ prevBtn.addEventListener(
         playlist.length > 0 &&
         loadTrack((currentTrackIndex - 1 + playlist.length) % playlist.length)
 );
+
+speedBtn.addEventListener("click", () => {
+    currentSpeedIndex = (currentSpeedIndex + 1) % playbackSpeeds.length;
+    const newSpeed = playbackSpeeds[currentSpeedIndex];
+    audioPlayer.playbackRate = newSpeed;
+    speedBtn.textContent = `${newSpeed}`;
+    saveCurrentState();
+});
 
 audioPlayer.addEventListener(
     "play",

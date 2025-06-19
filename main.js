@@ -20,6 +20,8 @@ function createWindow() {
         trafficLightPosition: { x: 15, y: 15 },
     });
 
+    // mainWindow.webContents.openDevTools();
+
     // Save window state on resize and move
     mainWindow.on("resize", () => {
         const { width, height } = mainWindow.getBounds();
@@ -132,6 +134,7 @@ ipcMain.handle("get-initial-state", () => {
         currentTrackIndex: -1,
         volume: 0.5,
         playbackPosition: 0,
+        playbackRate: 1.0,
     });
 });
 

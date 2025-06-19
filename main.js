@@ -62,13 +62,7 @@ const createMenu = () => {
                             filters: [
                                 {
                                     name: "Audio",
-                                    extensions: [
-                                        "mp3",
-                                        "wav",
-                                        "ogg",
-                                        "flac",
-                                        "m4b",
-                                    ],
+                                    extensions: ["mp3", "wav", "ogg", "flac"],
                                 },
                             ],
                         });
@@ -82,7 +76,14 @@ const createMenu = () => {
                 },
             ],
         },
-        { role: "viewMenu" },
+        {
+            label: "View",
+            submenu: [
+                { role: "reload" },
+                { role: "forceReload" },
+                { role: "toggleDevTools" },
+            ],
+        },
     ];
 
     const menu = Menu.buildFromTemplate(template);
@@ -105,15 +106,27 @@ app.on("window-all-closed", () => {
 
 // --- IPC HANDLERS ---
 
+// MODIFIED: To extract picture data
 ipcMain.handle("get-metadata", async (event, filePath) => {
     try {
-        const metadata = await musicMetadata.parseFile(filePath);
+        const metadata = await musicMetadata.parseFile(filePath, {
+            duration: true,
+        });
+        const picture = metadata.common.picture?.[0];
+
         return {
             title: metadata.common.title,
             artist: metadata.common.artist,
             album: metadata.common.album,
+            picture: picture
+                ? {
+                      format: picture.format,
+                      data: picture.data.toString("base64"),
+                  }
+                : null,
         };
     } catch (error) {
+        console.error("Error reading metadata:", error);
         return {};
     }
 });
@@ -121,9 +134,7 @@ ipcMain.handle("get-metadata", async (event, filePath) => {
 ipcMain.handle("open-file-dialog", async () => {
     const { filePaths } = await dialog.showOpenDialog({
         properties: ["openFile", "multiSelections"],
-        filters: [
-            { name: "Audio", extensions: ["mp3", "wav", "ogg", "flac", "m4b"] },
-        ],
+        filters: [{ name: "Audio", extensions: ["mp3", "wav", "ogg", "flac"] }],
     });
     return filePaths;
 });

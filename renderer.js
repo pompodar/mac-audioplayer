@@ -14,6 +14,8 @@ const playlistEl = document.getElementById("playlist");
 const addFilesBtn = document.getElementById("add-files-btn");
 const playerContainer = document.getElementById("player-container");
 const speedBtn = document.getElementById("speed-btn");
+const artworkContainer = document.getElementById("artwork-container"); // ADDED
+const albumArt = document.getElementById("album-art"); // ADDED
 
 // --- State Variables ---
 let playlist = [];
@@ -49,7 +51,7 @@ async function loadInitialState() {
 
         const savedSpeed = state.playbackRate || 1.0;
         audioPlayer.playbackRate = savedSpeed;
-        speedBtn.textContent = `${savedSpeed}`;
+        speedBtn.textContent = `${savedSpeed}x`;
         const speedIndex = playbackSpeeds.indexOf(savedSpeed);
         currentSpeedIndex = speedIndex > -1 ? speedIndex : 0;
 
@@ -77,10 +79,22 @@ function loadTrack(index, autoplay = true) {
     if (index < 0 || index >= playlist.length) return;
     currentTrackIndex = index;
     audioPlayer.src = playlist[index];
+
+    resetArtwork(); // Reset art before loading new metadata
+
     window.api.getMetadata(playlist[index]).then((meta) => {
         titleEl.textContent = meta.title || "Unknown Title";
         artistEl.textContent = meta.artist || "Unknown Artist";
+
+        // Set album art if it exists
+        if (meta.picture) {
+            const dataUrl = `data:${meta.picture.format};base64,${meta.picture.data}`;
+            albumArt.src = dataUrl;
+            artworkContainer.style.backgroundImage = `url(${dataUrl})`;
+            artworkContainer.classList.add("has-art");
+        }
     });
+
     updatePlaylistUI();
     saveCurrentState();
     if (autoplay) audioPlayer.play();
@@ -158,6 +172,7 @@ function deleteTrack(indexToDelete) {
             currentTimeEl.textContent = "0:00";
             durationEl.textContent = "0:00";
             currentTrackIndex = -1;
+            resetArtwork(); // Reset art when playlist is empty
         } else {
             if (currentTrackIndex >= playlist.length) {
                 currentTrackIndex = 0;
@@ -222,7 +237,7 @@ speedBtn.addEventListener("click", () => {
     currentSpeedIndex = (currentSpeedIndex + 1) % playbackSpeeds.length;
     const newSpeed = playbackSpeeds[currentSpeedIndex];
     audioPlayer.playbackRate = newSpeed;
-    speedBtn.textContent = `${newSpeed}`;
+    speedBtn.textContent = `${newSpeed}x`;
     saveCurrentState();
 });
 
@@ -259,4 +274,10 @@ function formatTime(seconds) {
     const min = Math.floor(seconds / 60);
     const sec = Math.floor(seconds % 60);
     return `${min}:${sec.toString().padStart(2, "0")}`;
+}
+
+// ADDED: Helper to reset the album art UI
+function resetArtwork() {
+    albumArt.src = "";
+    artworkContainer.classList.remove("has-art");
 }

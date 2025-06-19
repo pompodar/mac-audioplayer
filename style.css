@@ -170,3 +170,52 @@ input[type="range"]::-moz-range-thumb {
     font-weight: bold;
     /* It will inherit the border, color, and hover effects from the main #controls button rule */
 }
+
+/* ADD these new styles for the artwork */
+#artwork-container {
+    width: 90%;
+    height: 400px;
+    margin: 0 auto 20px auto; /* Center it and add space below */
+    padding: 20px;
+    background-color: var(--primary-bg);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden; /* Ensures the image respects the border-radius */
+}
+
+#artwork-container::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: inherit; /* or use a background image/color */
+    filter: blur(6px); /* adjust blur as needed */
+    z-index: 0;
+}
+
+#album-art {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Prevents stretching of the image */
+    display: none; /* Hidden by default */
+    border-radius: 8px;
+    z-index: 1;
+    filter: drop-shadow(2px 4px 6px black);
+}
+
+#art-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 80px;
+    color: var(--secondary-bg);
+}
+
+/* A helper class to toggle visibility */
+#artwork-container.has-art #art-placeholder {
+    display: none;
+}
+#artwork-container.has-art #album-art {
+    display: block;
+}
